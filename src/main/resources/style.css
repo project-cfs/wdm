@@ -1,0 +1,15 @@
+html, body, div {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+* {
+	font-size: 14px;
+	font-family: 'Old Standart TT', serif;
+}
+
+body {
+	padding: 20px;
+}
