@@ -3,9 +3,15 @@ package com.github.projectcfs.wdm.lang;
 import com.github.projectcfs.antlr.WdmParser;
 import org.antlr.v4.runtime.misc.Interval;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> {
+
+	private static final Path TEMPLATE_PATH = Paths.get("src", "main", "resources", "file-template.txt");
 
 	private final WdmParser parser;
 
@@ -18,12 +24,20 @@ public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> 
 	}
 
 	public String visitFile(WdmParser.FileContext file) {
-		if (file.children == null) return "";
+		String body = file.children == null ? "" :
+				file.children
+						.stream()
+						.map(statement -> visitStatement((WdmParser.StatementContext) statement))
+						.collect(Collectors.joining("\n"));
 
-		return file.children
-				.stream()
-				.map(statement -> visitStatement((WdmParser.StatementContext) statement))
-				.collect(Collectors.joining("\n"));
+		try {
+			return String.format(
+					Files.readString(TEMPLATE_PATH),
+					body
+			);
+		} catch (IOException e) {
+			throw new RuntimeException("Unable to locate template file.", e);
+		}
 	}
 
 	public String visitStatement(WdmParser.StatementContext statement) {
