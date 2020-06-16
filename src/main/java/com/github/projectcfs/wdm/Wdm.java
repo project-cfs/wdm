@@ -8,7 +8,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -34,7 +33,7 @@ public class Wdm implements Callable<Integer> {
 	}
 
 	@Override
-	public Integer call() throws IOException {
+	public Integer call() {
 		try {
 			if (sources == null) throw new IllegalStateException("No source files provided");
 			for (var s : sources) {
