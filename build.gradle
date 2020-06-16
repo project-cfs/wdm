@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id "antlr"
+}
+
+group 'com.github.projectcfs'
+version '0.1'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    antlrVersion = "4.8-1"
+    slf4jVerstion = "1.7.30"
+}
+
+dependencies {
+    implementation "org.jetbrains:annotations:16.0.2"
+
+    implementation "org.slf4j:slf4j-api:$slf4jVerstion"
+    implementation "org.slf4j:slf4j-simple:$slf4jVerstion"
+
+    implementation "org.antlr:antlr4-runtime:$antlrVersion"
+    antlr "org.antlr:antlr4:$antlrVersion"
+
+    testCompile "org.junit.jupiter:junit-jupiter-api:5.7.0-M1"
+}
+
+generateGrammarSource {
+    maxHeapSize = "64m"
+    arguments += ["-visitor", "-long-messages"]
+}

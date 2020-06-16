@@ -1,0 +1,18 @@
+(file
+    (statement
+        (directive
+            \
+            (directiveName h1))
+        (text
+            (richText some header over here)
+        )
+    )
+    (statement
+        (directive
+            \
+            (directiveName p))
+        (text
+            (richText Text is over here.\nIfyouusemultiplelines-itwontbeeasier.)
+        )
+    )
+)

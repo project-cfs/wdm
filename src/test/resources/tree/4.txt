@@ -1,0 +1,22 @@
+(file
+    (statement
+        (directive
+            \
+            (directiveNamep)
+        )
+        (text
+            (richTextSometextcanbe)
+            (richText
+                (wrapDirective
+                    (directive\(directiveNameb))
+                        {
+                        (text(richTextbold))
+                        }
+                )
+            )
+            (richText
+                .
+            )
+        )
+    )
+)
