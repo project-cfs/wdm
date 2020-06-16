@@ -6,11 +6,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ParserTest {
+class ParserTest extends LangTest {
 
 	@Test
 	void shouldParse1() throws IOException {
@@ -39,15 +38,6 @@ class ParserTest {
 				getTree(4),
 				getParseTree(getSourcePath(4))
 		);
-	}
-
-
-	private Path getSourcePath(int n) {
-		return Paths.get("src", "test", "resources", "source", n + ".wdml");
-	}
-
-	private Path getTreePath(int n) {
-		return Paths.get("src", "test", "resources", "tree", n + ".txt");
 	}
 
 	private String getParseTree(Path sourcePath) throws IOException {
