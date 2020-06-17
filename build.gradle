@@ -1,12 +1,14 @@
 plugins {
     id "java"
     id "antlr"
+    id "application"
 }
 
 group "com.github.projectcfs"
 version "0.1"
 
-def mainClassName = "com.github.projectcfs.wdm.Wdm"
+mainClassName = "com.github.projectcfs.wdm.Wdm"
+applicationName = "wdm"
 
 
 repositories {
@@ -35,18 +37,6 @@ dependencies {
 
 compileJava {
     options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
-}
-
-jar {
-    manifest {
-        attributes(
-                'Main-Class': "$mainClassName",
-                'Class-Path': configurations.runtime.files.collect { "lib/$it.name" }.join(' ')
-        )
-    }
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
 }
 
 generateGrammarSource {

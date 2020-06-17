@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-rm -r /usr/share/java/wdm
-rm /usr/bin/wdm
-
