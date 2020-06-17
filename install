@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+mkdir /usr/share/java/wdm
+cp build/libs/* /usr/share/java/wdm/
+cp wdm /usr/bin/
+
