@@ -7,11 +7,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> {
 
 	private static final Path TEMPLATE_PATH = Paths.get("src", "main", "resources", "file-template.txt");
+	private static final String STYLE_TEMPLATE = "<link href='%s' rel='stylesheet'>";
 
 	private final WdmParser parser;
 
@@ -24,15 +26,30 @@ public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> 
 	}
 
 	public String visitFile(WdmParser.FileContext file) {
-		String body = file.children == null ? "" :
-				file.children
-						.stream()
-						.map(statement -> visitStatement((WdmParser.StatementContext) statement))
-						.collect(Collectors.joining("\n"));
+		file.children = file.children == null ? Collections.emptyList() : file.children;
+
+		String body = file.children
+				.stream()
+				.map(statement -> (WdmParser.StatementContext) statement)
+				.filter(statement -> statement.directive() != null)
+				.map(this::visitStatement)
+				.collect(Collectors.joining("\n"));
+
+		String styles = file.children
+				.stream()
+				.map(statement -> (WdmParser.StatementContext) statement)
+				.filter(statement -> statement.wrapDirective() != null)
+				.map(WdmParser.StatementContext::wrapDirective)
+				.filter(wrapDirective -> visitDirective(wrapDirective.directive()).equals("style"))
+				.map(this::visitStyleStatement)
+				.map(line -> line.concat("\n"))
+				.collect(Collectors.joining());
+
 
 		try {
 			return String.format(
 					Files.readString(TEMPLATE_PATH),
+					styles,
 					body
 			);
 		} catch (IOException e) {
@@ -41,11 +58,18 @@ public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> 
 	}
 
 	public String visitStatement(WdmParser.StatementContext statement) {
-		return String.format(
-				"<div class='%s'>%s</div>\n",
-				visitDirective(statement.directive()),
-				visitText(statement.text())
-		);
+		if (statement.directive() != null) {
+			return String.format(
+					"<div class='%s'>%s</div>\n",
+					visitDirective(statement.directive()),
+					statement.text() != null ? visitText(statement.text()) : ""
+			);
+		}
+		if (statement.wrapDirective() != null) {
+			return visitWrapDirective(statement.wrapDirective());
+		}
+
+		throw new IllegalArgumentException("syntax error");
 	}
 
 	public String visitDirective(WdmParser.DirectiveContext directive) {
@@ -77,6 +101,10 @@ public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> 
 		} else {
 			return content(richText);
 		}
+	}
+
+	private String visitStyleStatement(WdmParser.WrapDirectiveContext wrapDirective) {
+		return String.format(STYLE_TEMPLATE, visitText(wrapDirective.text()));
 	}
 
 	/**
