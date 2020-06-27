@@ -1,3 +1,5 @@
+[![Build Status](https://img.shields.io/github/workflow/status/project-cfs/wdm/wdm)](https://github.com/project-cfs/wdm/actions)
+
 # wdm
 web document markup (wdm) - documents on the web
 
