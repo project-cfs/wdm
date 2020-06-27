@@ -2,6 +2,7 @@ package com.github.projectcfs.wdm.lang.visitor;
 
 import com.github.projectcfs.wdm.antlr.WdmBaseVisitor;
 import com.github.projectcfs.wdm.antlr.WdmParser;
+import com.github.projectcfs.wdm.config.PropertyLoader;
 import org.antlr.v4.runtime.misc.Interval;
 
 import java.io.IOException;
@@ -9,13 +10,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements DirectiveVisitor {
 
 	private static final Path TEMPLATE_PATH = Paths.get("src", "main", "resources", "file-template.txt");
-	private static final String STYLE_TEMPLATE = "<link href='%s' rel='stylesheet'>";
+
+	private final PropertyLoader propertyLoader;
 
 	private final WdmParser parser;
 	private final Map<String, DirectiveVisitor> directiveVisitorMap;
@@ -26,6 +30,7 @@ public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements 
 	}
 
 	public AbstractDirectiveVisitor(WdmParser parser, Map<String, DirectiveVisitor> directiveVisitorMap) {
+		this.propertyLoader = new PropertyLoader();
 		this.parser = parser;
 		this.directiveVisitorMap = directiveVisitorMap;
 		this.defaultDirectiveVisitor = new DefaultDirectiveVisitor();
@@ -55,21 +60,31 @@ public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements 
 				.map(this::visitStatement)
 				.collect(Collectors.joining("\n"));
 
-		String styles = file.children
+		List<String> styles = file.children
 				.stream()
 				.map(statement -> (WdmParser.StatementContext) statement)
 				.filter(statement -> statement.wrapDirective() != null)
 				.map(WdmParser.StatementContext::wrapDirective)
 				.filter(wrapDirective -> visitDirective(this, wrapDirective.directive()).equals("style"))
-				.map(this::visitStyleStatement)
+				.map(WdmParser.WrapDirectiveContext::text)
+				.filter(Objects::nonNull)
+				.map(this::visitText)
+				.collect(Collectors.toList());
+
+		if (styles.isEmpty()) {
+			styles.add(propertyLoader.get("default.style.link"));
+		}
+
+		String stylesBlock = styles
+				.stream()
+				.map(this::FormatStyleUrl)
 				.map(line -> line.concat("\n"))
 				.collect(Collectors.joining());
-
 
 		try {
 			return String.format(
 					Files.readString(TEMPLATE_PATH),
-					styles,
+					stylesBlock,
 					body
 			);
 		} catch (IOException e) {
@@ -80,7 +95,7 @@ public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements 
 	public String visitStatement(WdmParser.StatementContext statement) {
 		if (statement.directive() != null) {
 			return String.format(
-					"<div class='%s'>%s</div>\n",
+					propertyLoader.get("template.statement"),
 					visitDirective(this, statement.directive()),
 					statement.text() != null ? visitText(statement.text()) : ""
 			);
@@ -111,8 +126,8 @@ public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements 
 		}
 	}
 
-	private String visitStyleStatement(WdmParser.WrapDirectiveContext wrapDirective) {
-		return String.format(STYLE_TEMPLATE, visitText(wrapDirective.text()));
+	private String FormatStyleUrl(String url) {
+		return String.format(propertyLoader.get("template.style"), url);
 	}
 
 	/**
