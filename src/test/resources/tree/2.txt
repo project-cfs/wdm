@@ -1,9 +1,0 @@
-(file
-    (statement
-        (directive
-            \
-            (directiveName h1))
-        (text
-            (richText some header over here)
-        )
-))

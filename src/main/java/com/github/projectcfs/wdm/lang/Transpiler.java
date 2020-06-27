@@ -1,6 +1,7 @@
 package com.github.projectcfs.wdm.lang;
 
-import com.github.projectcfs.antlr.WdmParser;
+import com.github.projectcfs.wdm.antlr.WdmParser;
+import com.github.projectcfs.wdm.lang.visitor.AbstractDirectiveVisitor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,7 +16,7 @@ public class Transpiler {
 	}
 
 	public String transpile() {
-		return new Visitor(parser).visit();
+		return new AbstractDirectiveVisitor(parser).visit();
 	}
 
 	public void transpile(Path destinationPath) throws IOException {

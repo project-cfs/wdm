@@ -1,6 +1,7 @@
 package com.github.projectcfs.wdm.lang;
 
-import com.github.projectcfs.antlr.WdmParser;
+import com.github.projectcfs.wdm.antlr.WdmLexer;
+import com.github.projectcfs.wdm.antlr.WdmParser;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +19,7 @@ public class Parser {
 		try {
 			return new WdmParser(
 					new CommonTokenStream(
-							new com.github.projectcfs.antlr.WdmLexer(
+							new WdmLexer(
 									fromStream(new ByteArrayInputStream(source.getBytes(StandardCharsets.UTF_8)))
 							)
 					)

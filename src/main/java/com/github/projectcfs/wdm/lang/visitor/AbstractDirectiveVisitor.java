@@ -1,6 +1,7 @@
-package com.github.projectcfs.wdm.lang;
+package com.github.projectcfs.wdm.lang.visitor;
 
-import com.github.projectcfs.antlr.WdmParser;
+import com.github.projectcfs.wdm.antlr.WdmBaseVisitor;
+import com.github.projectcfs.wdm.antlr.WdmParser;
 import org.antlr.v4.runtime.misc.Interval;
 
 import java.io.IOException;
@@ -8,17 +9,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> {
+public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements DirectiveVisitor {
 
 	private static final Path TEMPLATE_PATH = Paths.get("src", "main", "resources", "file-template.txt");
 	private static final String STYLE_TEMPLATE = "<link href='%s' rel='stylesheet'>";
 
 	private final WdmParser parser;
+	private final Map<String, DirectiveVisitor> directiveVisitorMap;
+	private final DirectiveVisitor defaultDirectiveVisitor;
 
-	public Visitor(WdmParser parser) {
+	public AbstractDirectiveVisitor(WdmParser parser) {
+		this(parser, Collections.emptyMap());
+	}
+
+	public AbstractDirectiveVisitor(WdmParser parser, Map<String, DirectiveVisitor> directiveVisitorMap) {
 		this.parser = parser;
+		this.directiveVisitorMap = directiveVisitorMap;
+		this.defaultDirectiveVisitor = new DefaultDirectiveVisitor();
+	}
+
+	@Override
+	public String visitDirective(AbstractDirectiveVisitor visitor, WdmParser.DirectiveContext directive) {
+		return defaultDirectiveVisitor.visitDirective(this, directive);
+	}
+
+	@Override
+	public String visitWrapDirective(AbstractDirectiveVisitor visitor, WdmParser.WrapDirectiveContext wrapDirective) {
+		return defaultDirectiveVisitor.visitWrapDirective(this, wrapDirective);
 	}
 
 	public String visit() {
@@ -40,7 +60,7 @@ public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> 
 				.map(statement -> (WdmParser.StatementContext) statement)
 				.filter(statement -> statement.wrapDirective() != null)
 				.map(WdmParser.StatementContext::wrapDirective)
-				.filter(wrapDirective -> visitDirective(wrapDirective.directive()).equals("style"))
+				.filter(wrapDirective -> visitDirective(this, wrapDirective.directive()).equals("style"))
 				.map(this::visitStyleStatement)
 				.map(line -> line.concat("\n"))
 				.collect(Collectors.joining());
@@ -61,27 +81,15 @@ public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> 
 		if (statement.directive() != null) {
 			return String.format(
 					"<div class='%s'>%s</div>\n",
-					visitDirective(statement.directive()),
+					visitDirective(this, statement.directive()),
 					statement.text() != null ? visitText(statement.text()) : ""
 			);
 		}
 		if (statement.wrapDirective() != null) {
-			return visitWrapDirective(statement.wrapDirective());
+			return visitWrapDirective(this, statement.wrapDirective());
 		}
 
 		throw new IllegalArgumentException("syntax error");
-	}
-
-	public String visitDirective(WdmParser.DirectiveContext directive) {
-		return visitDirectiveName(directive.directiveName());
-	}
-
-	public String visitWrapDirective(WdmParser.WrapDirectiveContext wrapDirective) {
-		return String.format(
-				"<div class='%s'>%s</div>",
-				visitDirective(wrapDirective.directive()),
-				visitText(wrapDirective.text())
-		);
 	}
 
 	public String visitDirectiveName(WdmParser.DirectiveNameContext directiveName) {
@@ -97,7 +105,7 @@ public class Visitor extends com.github.projectcfs.antlr.WdmBaseVisitor<String> 
 
 	public String visitRichText(WdmParser.RichTextContext richText) {
 		if (richText.wrapDirective() != null) {
-			return visitWrapDirective(richText.wrapDirective());
+			return visitWrapDirective(this, richText.wrapDirective());
 		} else {
 			return content(richText);
 		}

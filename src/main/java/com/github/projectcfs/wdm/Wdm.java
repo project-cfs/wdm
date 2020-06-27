@@ -1,6 +1,6 @@
 package com.github.projectcfs.wdm;
 
-import com.github.projectcfs.antlr.WdmParser;
+import com.github.projectcfs.wdm.antlr.WdmParser;
 import com.github.projectcfs.wdm.lang.Parser;
 import com.github.projectcfs.wdm.lang.Transpiler;
 import org.slf4j.helpers.MessageFormatter;

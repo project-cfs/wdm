@@ -1,7 +1,7 @@
 grammar Wdm;
 
 @header {
-    package com.github.projectcfs.antlr;
+    package com.github.projectcfs.wdm.antlr;
 }
 
 file

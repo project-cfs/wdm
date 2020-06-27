@@ -9,10 +9,6 @@ public abstract class LangTest {
 		return Paths.get("src", "test", "resources", "source", n + ".wdml");
 	}
 
-	public Path getTreePath(int n) {
-		return Paths.get("src", "test", "resources", "tree", n + ".txt");
-	}
-
 	public Path getTranspilePath(int n) {
 		return Paths.get("src", "test", "resources", "transpile", n + ".html");
 	}
