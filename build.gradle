@@ -32,7 +32,8 @@ dependencies {
     implementation "info.picocli:picocli:4.3.2"
     annotationProcessor "info.picocli:picocli-codegen:4.3.2"
 
-    testCompile "org.junit.jupiter:junit-jupiter-api:5.7.0-M1"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0-M1"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0-M1"
 }
 
 compileJava {
@@ -42,4 +43,8 @@ compileJava {
 generateGrammarSource {
     maxHeapSize = "64m"
     arguments += ["-visitor", "-long-messages"]
+}
+
+test {
+    useJUnitPlatform()
 }
