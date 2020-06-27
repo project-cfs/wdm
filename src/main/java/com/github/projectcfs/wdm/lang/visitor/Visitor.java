@@ -1,6 +1,5 @@
 package com.github.projectcfs.wdm.lang.visitor;
 
-import com.github.projectcfs.wdm.antlr.WdmBaseVisitor;
 import com.github.projectcfs.wdm.antlr.WdmParser;
 import com.github.projectcfs.wdm.config.PropertyLoader;
 import org.antlr.v4.runtime.misc.Interval;
@@ -15,35 +14,25 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements DirectiveVisitor {
+public class Visitor {
 
 	private static final Path TEMPLATE_PATH = Paths.get("src", "main", "resources", "file-template.txt");
 
-	private final PropertyLoader propertyLoader;
+	public final PropertyLoader propertyLoader;
 
 	private final WdmParser parser;
-	private final Map<String, DirectiveVisitor> directiveVisitorMap;
-	private final DirectiveVisitor defaultDirectiveVisitor;
+	private final Map<String, StatementVisitor> directiveVisitorMap;
+	private final StatementVisitor defaultStatementVisitor;
 
-	public AbstractDirectiveVisitor(WdmParser parser) {
+	public Visitor(WdmParser parser) {
 		this(parser, Collections.emptyMap());
 	}
 
-	public AbstractDirectiveVisitor(WdmParser parser, Map<String, DirectiveVisitor> directiveVisitorMap) {
+	public Visitor(WdmParser parser, Map<String, StatementVisitor> directiveVisitorMap) {
 		this.propertyLoader = new PropertyLoader();
 		this.parser = parser;
 		this.directiveVisitorMap = directiveVisitorMap;
-		this.defaultDirectiveVisitor = new DefaultDirectiveVisitor();
-	}
-
-	@Override
-	public String visitDirective(AbstractDirectiveVisitor visitor, WdmParser.DirectiveContext directive) {
-		return defaultDirectiveVisitor.visitDirective(this, directive);
-	}
-
-	@Override
-	public String visitWrapDirective(AbstractDirectiveVisitor visitor, WdmParser.WrapDirectiveContext wrapDirective) {
-		return defaultDirectiveVisitor.visitWrapDirective(this, wrapDirective);
+		this.defaultStatementVisitor = new DefaultStatementVisitor();
 	}
 
 	public String visit() {
@@ -65,7 +54,7 @@ public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements 
 				.map(statement -> (WdmParser.StatementContext) statement)
 				.filter(statement -> statement.wrapDirective() != null)
 				.map(WdmParser.StatementContext::wrapDirective)
-				.filter(wrapDirective -> visitDirective(this, wrapDirective.directive()).equals("style"))
+				.filter(wrapDirective -> visitWrapDirective(wrapDirective).equals("style"))
 				.map(WdmParser.WrapDirectiveContext::text)
 				.filter(Objects::nonNull)
 				.map(this::visitText)
@@ -94,17 +83,22 @@ public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements 
 
 	public String visitStatement(WdmParser.StatementContext statement) {
 		if (statement.directive() != null) {
-			return String.format(
-					propertyLoader.get("template.statement"),
-					visitDirective(this, statement.directive()),
-					statement.text() != null ? visitText(statement.text()) : ""
-			);
+			return visitMatchedStatementVisitor(statement.directive(), statement.text());
+		} else {
+			return visitWrapDirective(statement.wrapDirective());
 		}
-		if (statement.wrapDirective() != null) {
-			return visitWrapDirective(this, statement.wrapDirective());
-		}
+	}
 
-		throw new IllegalArgumentException("syntax error");
+	public String visitWrapDirective(WdmParser.WrapDirectiveContext wrapDirective) {
+		return visitMatchedStatementVisitor(wrapDirective.directive(), wrapDirective.text());
+	}
+
+	public String visitMatchedStatementVisitor(WdmParser.DirectiveContext directive, WdmParser.TextContext text) {
+		StatementVisitor matchedVisitor = directiveVisitorMap.getOrDefault(
+				visitDirectiveName(directive.directiveName()),
+				defaultStatementVisitor
+		);
+		return matchedVisitor.visitStatement(this, directive, text);
 	}
 
 	public String visitDirectiveName(WdmParser.DirectiveNameContext directiveName) {
@@ -120,7 +114,7 @@ public class AbstractDirectiveVisitor extends WdmBaseVisitor<String> implements 
 
 	public String visitRichText(WdmParser.RichTextContext richText) {
 		if (richText.wrapDirective() != null) {
-			return visitWrapDirective(this, richText.wrapDirective());
+			return visitWrapDirective(richText.wrapDirective());
 		} else {
 			return content(richText);
 		}

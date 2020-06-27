@@ -30,6 +30,11 @@ class ParserTest extends LangTest {
 		assertNoErrors(4);
 	}
 
+	@Test
+	void shouldParse5() throws IOException {
+		assertNoErrors(5);
+	}
+
 	private void assertNoErrors(int i) throws IOException {
 		assertEquals(0, getParser(getSourcePath(i)).getNumberOfSyntaxErrors());
 	}
